@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width initial-scale=1.0 user-scalable=0" />
+    <link type="image/x-icon" rel="shortcut icon" href="/static/favicon.ico" />
+    <title>手写识别</title>
+    <style>
+        div{
+            width: 366px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        #display{
+            padding:0;
+            margin:0 auto 5px auto;
+            border:1px;
+            border-style:dashed;
+
+            height:230px;
+            
+            visibility: hidden;
+        }
+
+        div[class="image-wrapper"]{
+            margin:0;
+            padding:0;
+            border:0;
+
+            height:150px;
+        }
+        
+
+        body{
+            background: url("static/emmmm.jpg");
+            background-size: 350px auto;
+            background-repeat:repeat;
+            margin: 0;
+        }
+
+        input[type="button"]{
+            width: 130px;
+            height: 56px;
+            padding:0;
+            border: 1px;
+            border-radius: 10px;
+            margin: 16px 0 0 0;
+            display: inline;
+
+            color: rgb(100, 32, 240);
+            font-size: 20px;
+
+            background: rgb(255, 165, 0);
+        }
+        input[type="button"]:active{
+            transform: translateY(5px);
+        }
+        #btn-wrapper:active{
+            transform: translateY(5px);
+        }
+        
+        input[type="file"]{
+            width: 130px;
+            height: 56px;
+            position: relative;
+            top: -56px;
+            opacity: 0;
+        }
+        
+
+        p.prompt{
+            margin: 0 40px;
+            padding: 0;
+            border: 0;
+            
+            display: inline;
+            
+            width: 100px;
+            height: 40px;
+            font-size:24px;
+            font-weight:bold;
+            text-align: center;
+
+            color: #EEE;
+            background-color: #666;
+        }
+        
+        
+        img.image{
+            //width:300px;
+            height: 60px;
+            border:2px;
+            border-style:solid;
+            
+            background-color: rgba(255,255,255,0.7)
+        }
+
+    </style>
+    <script>
+
+        var RECOG_URL = "/recog";  // the url to send image and the response is the recognition result
+        /* the width and height of canvas element #cv */
+        var IMG_W = 150;  //px
+        var IMG_H = 150;  //px
+        
+        
+        var request = new XMLHttpRequest();
+        
+        request.onreadystatechange = function (){
+            show_out();
+            if (request.status==200 && request.readyState==4){
+
+                data = JSON.parse(request.responseText);                
+
+                //insert pre-processed image
+                //var img = document.getElementById("image-recog");
+                //img.src = data["image-recog-url"] + "?t=" + Math.random();
+                //img.alt = "出错";
+                //img.style.width = IMG_W + "px";
+                //img.style.height = IMG_H + "px";
+
+                //insert recognition result
+                var container_result = document.getElementById("result");
+                var result = data['digit'];
+                container_result.innerText = "" + result;
+            }
+        }
+        
+    function show_out(){
+        //show the relative elements outline
+        document.getElementById("display").style.visibility = "visible";   
+    }
+    
+    function send(files){
+        //send the file, the fileObj should be a image
+        var file = files[0];
+        var reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function (){
+            //Send when the file reading has finished.
+            var data_url = reader.result;
+            console.log("data url: " + data_url);
+        
+            var formData = new FormData();
+            formData.append("image", data_url);
+            formData.append("trajectory", "");  //For compatibility, you get it?
+            request.open('POST', RECOG_URL, true);
+            request.send(formData);
+        }
+    }
+    
+    function load_image(files){
+        //load the image that user selected by the <input type="file"> element
+        var file = files[0];
+        var data_url = window.URL.createObjectURL(file);
+        
+        var img = document.getElementById("image-raw");
+        img.src = data_url;
+    }
+    
+    function request_recog(files){
+        load_image(files);
+        send(files);
+    }
+    
+</script>
+</head>
+
+
+<body>
+
+    <div id="display">
+        <div id="prompt-wrapper" style="height:70px;margin:0; border:0; padding:0;">
+           <div id="prompt-line1" style="margin:0 0 10px;text-align:left;">
+                <p class="prompt" style="margin:0;font-size:18px;">
+                    识别结果:
+                </p>
+                <p class="prompt" id="result" style="margin:0;font-size:18px;">
+                    6
+                </p>
+           </div>
+           
+           <div id="prompt-line2" style="display:inline;">
+                <p class="prompt" style="display:inline;">
+                    原始图
+                </p>
+                <!--p class="prompt">
+                    识别图
+                </p -->
+            </div>
+        </div>
+        
+        <div class="image-wrapper" style="display:inline;">
+            <img id="image-raw" class="image"/>
+            <!--img id="image-recog" class="image"/-->
+        </div>
+    </div>
+
+
+    <div style="width:130px" id="btn-wrapper">
+        <form action="/recog" method="POST" enctype="multipart/form-data">
+            <input type="button" value="上传图片识别"/>
+            <input type="file" accept="image/*" onchange="request_recog(this.files)">
+        </form>
+    </div>
+    
+    <div>
+        <style>
+            a[href="/recog2"]{
+                padding: 2px;
+                text-decoration: none;
+                text-align: center;
+                font-size: 16px;
+                            
+                border: 1px;
+                border-radius: 5px;
+
+                color: rgb(100, 32, 240);
+                background: rgb(255, 165, 0);
+            }
+        </style>
+        <a href="/recog2" > 使用手写识别 </a>
+    </div>
+
+</body>
+</html>
